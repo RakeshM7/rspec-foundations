@@ -1,0 +1,24 @@
+AllCops:
+  NewCops: enable
+  Exclude:
+    - 'vendor/**/*'
+    - 'allure-results/**/*'
+
+# RSpec describe blocks are naturally long — don't penalize them
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+
+# Long lines are acceptable in spec files (e.g. long subject strings)
+Layout/LineLength:
+  Max: 130
+  Exclude:
+    - 'spec/**/*'
+
+# RSpec convention uses word-based names (e.g. let(:ticket_id))
+Naming/MethodParameterName:
+  Enabled: false
+
+# Allow Allure.step blocks without frozen_string_literal in specs
+Style/FrozenStringLiteralComment:
+  Enabled: true

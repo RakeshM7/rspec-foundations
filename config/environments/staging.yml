@@ -1,0 +1,6 @@
+staging:
+  app_url: "https://yourdomain.freshservice.com"
+  api_base: "https://yourdomain.freshservice.com/api/v2"
+  browser: chrome_headless
+  default_wait: 10
+  ajax_wait: 15

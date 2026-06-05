@@ -1,0 +1,8 @@
+.env
+allure-results/
+allure-report/
+vendor/
+.bundle/
+tmp/
+*.log
+.DS_Store

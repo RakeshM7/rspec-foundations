@@ -1,0 +1,132 @@
+# ============================================================
+# FILE: .rspec
+# ============================================================
+# These flags are applied on every `bundle exec rspec` invocation.
+# --require spec_helper   → always loads spec_helper.rb
+# --format documentation  → readable terminal output (name-based)
+# --color                 → green/red coloured pass/fail
+# --order random          → catches implicit test ordering dependencies
+# ============================================================
+
+--require spec_helper
+--format documentation
+--color
+--order random
+
+
+# ============================================================
+# FILE: .env.example  (commit this — never commit .env)
+# ============================================================
+# Copy this to .env and fill in values for local development.
+# In Jenkins, set these as credentials/environment variables
+# in the pipeline — dotenv is only used locally.
+# ============================================================
+
+# Freshservice instance domain (without https:// or trailing slash)
+FS_DOMAIN=yourcompany
+
+# Full app URL used by Capybara as base URL
+APP_URL=https://yourcompany.freshservice.com
+
+# API key from Freshservice Profile > API Settings
+# Used for: API tests auth + pre-condition setup in UI tests
+FS_API_KEY=your_api_key_here
+
+# Test user credentials for UI login
+ADMIN_EMAIL=admin@yourcompany.com
+ADMIN_PASSWORD=your_password_here
+
+# Second user for multi-actor tests (e.g. change approval)
+APPROVER_EMAIL=approver@yourcompany.com
+APPROVER_PASSWORD=your_approver_password
+
+# Browser driver: chrome_headless (CI default), chrome (local debug), firefox_headless
+BROWSER=chrome_headless
+
+# Target test environment: staging | production (read-only only on prod)
+TEST_ENV=staging
+
+# Set to 'true' to run cleanup after suite completes
+CLEANUP_AFTER_SUITE=false
+
+
+# ============================================================
+# FILE: Rakefile
+# ============================================================
+# Run with: bundle exec rake <task>
+# ============================================================
+
+require 'rspec/core/rake_task'
+require 'allure-rspec'
+
+# ── Test tasks ───────────────────────────────
+namespace :rspec do
+  desc 'Run smoke tests only (fast, <5 min — run on every PR)'
+  RSpec::Core::RakeTask.new(:smoke) do |t|
+    t.rspec_opts = '--tag smoke'
+  end
+
+  desc 'Run full regression suite (slow — nightly CI only)'
+  RSpec::Core::RakeTask.new(:regression) do |t|
+    t.rspec_opts = '--tag regression'
+  end
+
+  desc 'Run UI tests only'
+  RSpec::Core::RakeTask.new(:ui) do |t|
+    t.pattern = 'spec/ui/**/*_spec.rb'
+  end
+
+  desc 'Run API tests only (no browser needed)'
+  RSpec::Core::RakeTask.new(:api) do |t|
+    t.pattern = 'spec/api/**/*_spec.rb'
+  end
+
+  desc 'Run tests for a specific TPCR entity: rake rspec:entity[tickets]'
+  RSpec::Core::RakeTask.new(:entity, :name) do |t, args|
+    t.pattern = "spec/**/#{args[:name]}/**/*_spec.rb"
+  end
+end
+
+# ── Allure tasks ─────────────────────────────
+namespace :allure do
+  desc 'Generate HTML report from allure-results/'
+  task :generate do
+    sh 'allure generate allure-results -o allure-report --clean'
+    puts 'Report generated at allure-report/index.html'
+  end
+
+  desc 'Open Allure report in browser (generates first if needed)'
+  task open: :generate do
+    sh 'allure open allure-report'
+  end
+end
+
+# ── Cleanup task ─────────────────────────────
+namespace :cleanup do
+  desc 'Delete all test data from Freshservice (entities with [TEST] prefix)'
+  task :test_data do
+    puts 'Cleaning up test data...'
+    # TODO: implement TestDataCleanup.run! against FS API
+    # Lists all tickets/problems/changes/releases with subject starting [TEST]
+    # Deletes them in reverse dependency order: releases → changes → problems → tickets
+  end
+end
+
+# ── Default task ─────────────────────────────
+task default: 'rspec:smoke'
+
+
+# ============================================================
+# FILE: .gitignore
+# ============================================================
+
+.env
+vendor/
+.bundle/
+allure-results/
+allure-report/
+tmp/
+*.log
+.DS_Store
+.byebug_history
+coverage/
