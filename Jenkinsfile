@@ -48,7 +48,7 @@ pipeline {
     // credentials('id') fetches a Jenkins Secret Text credential.
     // The value is MASKED in build logs — never printed even if someone does `echo $FS_API_KEY`.
     FS_API_KEY  = credentials('freshservice-api-key')
-    APP_URL     = credentials('freshservice-app-url')
+    APP_URL     = 'https://rspec-framework-may-21.freshservice.com'
 
     // Non-secret values from parameters
     TEST_ENV    = "${params.TEST_ENV}"
@@ -155,40 +155,31 @@ pipeline {
   post {
 
     always {
-      // Publish Allure report via the Allure Jenkins Plugin.
-      // This adds a link to the build page and powers the trend graph.
-      // Plugin config: Manage Jenkins → Global Tool Configuration → Allure
-      allure([
-        includeProperties: true,
-        jdk:               '',
-        results:           [[path: 'allure-results']],
-        report:            'allure-report'
-      ])
+      node('built-in') {
+        allure([
+          includeProperties: true,
+          jdk:               '',
+          results:           [[path: 'allure-results']],
+          report:            'allure-report'
+        ])
 
-      // Archive test artifacts for debugging without the UI.
-      archiveArtifacts artifacts: 'tmp/screenshots/**/*.png', allowEmptyArchive: true
-      archiveArtifacts artifacts: 'allure-results/**/*.json', allowEmptyArchive: true
+        archiveArtifacts artifacts: 'tmp/screenshots/**/*.png', allowEmptyArchive: true
+        archiveArtifacts artifacts: 'allure-results/**/*.json', allowEmptyArchive: true
+      }
     }
 
     success {
       echo 'All tests passed. Allure report published.'
-      // Uncomment to notify Slack on success:
-      // slackSend color: 'good', message: "PASS: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
     }
 
     failure {
       echo 'Build failed. Check Allure report and archived screenshots.'
-      // emailext (
-      //   subject: "FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-      //   body:    "See ${env.BUILD_URL}allure/",
-      //   to:      'qa-team@yourcompany.com'
-      // )
     }
 
     cleanup {
-      // Delete workspace contents after the build to reclaim disk on the agent.
-      // Gemfile.lock stays committed in git — vendor/ is regenerated next run.
-      cleanWs(cleanWhenAborted: true, cleanWhenFailure: false, cleanWhenSuccess: true)
+      node('built-in') {
+        cleanWs(cleanWhenAborted: true, cleanWhenFailure: false, cleanWhenSuccess: true)
+      }
     }
 
   } // end post
