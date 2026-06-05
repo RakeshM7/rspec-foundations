@@ -16,7 +16,12 @@
 
 pipeline {
 
-  agent any
+  agent {
+    docker {
+      image 'ruby:3.2'
+      args  '--user root'
+    }
+  }
 
   // ── Job-level parameters ────────────────────────────────────────────────────
   // Visible in Jenkins UI as "Build with Parameters"
@@ -83,9 +88,6 @@ pipeline {
     stage('Setup — Install Ruby gems') {
       steps {
         sh '''
-          # rbenv or rvm must be installed on the Jenkins agent.
-          # If using Docker agent, use a ruby:3.2 image instead.
-          gem install bundler --no-document
           bundle install --path vendor/bundle --jobs 4 --retry 3
         '''
       }
