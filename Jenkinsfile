@@ -16,12 +16,7 @@
 
 pipeline {
 
-  agent {
-    docker {
-      image 'ruby:3.2'
-      args  '--user root'
-    }
-  }
+  agent any
 
   // ── Job-level parameters ────────────────────────────────────────────────────
   // Visible in Jenkins UI as "Build with Parameters"
